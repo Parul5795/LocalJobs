@@ -1,0 +1,34 @@
+## Ignore Visual Studio / MSBuild / dotnet temporary build artifacts
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / IntelliJ files
+.idea/
+*.sln.iml
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# User-specific / Local settings files
+appsettings.local.json
+appsettings.Local.json
+*.local.json
+
+# Publish / Package output
+publish/
+*.nupkg
+
+# Debug / Crash logs
+*.log
+*.pdb
+*.dll
+*.exe

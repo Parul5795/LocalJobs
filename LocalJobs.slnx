@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="LocalJobs.Api/LocalJobs.Api.csproj" />
+  <Project Path="LocalJobs.Application/LocalJobs.Application.csproj" />
+  <Project Path="LocalJobs.Contracts/LocalJobs.Contracts.csproj" />
+  <Project Path="LocalJobs.Domain/LocalJobs.Domain.csproj" />
+  <Project Path="LocalJobs.Infrastructure/LocalJobs.Infrastructure.csproj" />
+</Solution>
