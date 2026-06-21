@@ -17,6 +17,11 @@ public class JobService : IJobService
 
     public async Task<JobResponse?> CreateJobAsync(CreateJobRequest request, Guid userId, CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException("UserId is required.");
+        }
+
         var userExists = await _context.Users.AnyAsync(u => u.Id == userId, cancellationToken);
         if (!userExists)
         {
@@ -56,7 +61,7 @@ public class JobService : IJobService
     public async Task<JobResponse?> GetJobByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Jobs
-            .Where(j => j.Id == id)
+            .Where(j => j.Id == id && j.IsActive)
             .Select(j => new JobResponse(
                 j.Id,
                 j.Title,
@@ -76,18 +81,37 @@ public class JobService : IJobService
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<JobResponse>> SearchJobsAsync(
-        string? searchTerm,
-        int? categoryId,
-        int? cityId,
-        CancellationToken cancellationToken = default)
+    public async Task<List<JobResponse>> GetJobsAsync(CancellationToken cancellationToken = default)
     {
-        var query = _context.Jobs.AsQueryable();
+        return await _context.Jobs
+            .Where(j => j.IsActive)
+            .OrderByDescending(j => j.CreatedAt)
+            .Select(j => new JobResponse(
+                j.Id,
+                j.Title,
+                j.Description,
+                j.Salary,
+                j.CategoryId,
+                j.Category.Name,
+                j.CityId,
+                j.City.Name,
+                j.City.State,
+                j.UserId,
+                j.User.Name,
+                j.IsActive,
+                j.CreatedAt,
+                j.UpdatedAt
+            ))
+            .ToListAsync(cancellationToken);
+    }
 
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+    public async Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Jobs.Where(j => j.IsActive);
+
+        if (cityId.HasValue)
         {
-            var term = searchTerm.ToLower();
-            query = query.Where(j => j.Title.ToLower().Contains(term) || j.Description.ToLower().Contains(term));
+            query = query.Where(j => j.CityId == cityId.Value);
         }
 
         if (categoryId.HasValue)
@@ -95,12 +119,8 @@ public class JobService : IJobService
             query = query.Where(j => j.CategoryId == categoryId.Value);
         }
 
-        if (cityId.HasValue)
-        {
-            query = query.Where(j => j.CityId == cityId.Value);
-        }
-
         return await query
+            .OrderByDescending(j => j.CreatedAt)
             .Select(j => new JobResponse(
                 j.Id,
                 j.Title,
@@ -129,8 +149,8 @@ public class JobService : IJobService
         }
 
         job.IsActive = false;
+        job.UpdatedAt = DateTime.UtcNow;
 
-        // Note: UpdatedAt is updated automatically in ApplicationDbContext.SaveChangesAsync
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }

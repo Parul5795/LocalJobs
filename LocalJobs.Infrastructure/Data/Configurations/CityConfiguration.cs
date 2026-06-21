@@ -27,13 +27,12 @@ public class CityConfiguration : IEntityTypeConfiguration<City>
             .IsUnique();
 
         builder.HasData(
-            new City { Id = 1, Name = "New York", State = "NY" },
-            new City { Id = 2, Name = "Los Angeles", State = "CA" },
-            new City { Id = 3, Name = "Chicago", State = "IL" },
-            new City { Id = 4, Name = "Houston", State = "TX" },
-            new City { Id = 5, Name = "Phoenix", State = "AZ" },
-            new City { Id = 6, Name = "Philadelphia", State = "PA" },
-            new City { Id = 7, Name = "Seattle", State = "WA" }
+            new City { Id = 1, Name = "Pune", State = "Maharashtra" },
+            new City { Id = 2, Name = "Mumbai", State = "Maharashtra" },
+            new City { Id = 3, Name = "Bangalore", State = "Karnataka" },
+            new City { Id = 4, Name = "Delhi", State = "Delhi" },
+            new City { Id = 5, Name = "Hyderabad", State = "Telangana" },
+            new City { Id = 6, Name = "Chennai", State = "Tamil Nadu" }
         );
     }
 }

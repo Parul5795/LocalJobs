@@ -9,7 +9,9 @@ public interface IJobService
 
     Task<JobResponse?> GetJobByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<JobResponse>> SearchJobsAsync(string? searchTerm, int? categoryId, int? cityId, CancellationToken cancellationToken = default);
+    Task<List<JobResponse>> GetJobsAsync(CancellationToken cancellationToken = default);
+
+    Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, CancellationToken cancellationToken = default);
 
     Task<bool> DeactivateJobAsync(Guid id, CancellationToken cancellationToken = default);
 }

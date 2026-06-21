@@ -78,6 +78,48 @@ namespace LocalJobs.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Driver"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Maid"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Cook"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Tutor"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Electrician"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Plumber"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Delivery Boy"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Office Assistant"
+                        });
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.City", b =>
@@ -104,6 +146,44 @@ namespace LocalJobs.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Cities", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Pune",
+                            State = "Maharashtra"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Mumbai",
+                            State = "Maharashtra"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Bangalore",
+                            State = "Karnataka"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Delhi",
+                            State = "Delhi"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Hyderabad",
+                            State = "Telangana"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Chennai",
+                            State = "Tamil Nadu"
+                        });
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>

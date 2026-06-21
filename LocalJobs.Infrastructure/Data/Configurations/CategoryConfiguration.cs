@@ -23,13 +23,14 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsUnique();
 
         builder.HasData(
-            new Category { Id = 1, Name = "IT & Software Development" },
-            new Category { Id = 2, Name = "Healthcare & Medicine" },
-            new Category { Id = 3, Name = "Education & Training" },
-            new Category { Id = 4, Name = "Construction & Trades" },
-            new Category { Id = 5, Name = "Retail & Customer Service" },
-            new Category { Id = 6, Name = "Hospitality & Tourism" },
-            new Category { Id = 7, Name = "Finance & Accounting" }
+            new Category { Id = 1, Name = "Driver" },
+            new Category { Id = 2, Name = "Maid" },
+            new Category { Id = 3, Name = "Cook" },
+            new Category { Id = 4, Name = "Tutor" },
+            new Category { Id = 5, Name = "Electrician" },
+            new Category { Id = 6, Name = "Plumber" },
+            new Category { Id = 7, Name = "Delivery Boy" },
+            new Category { Id = 8, Name = "Office Assistant" }
         );
     }
 }
