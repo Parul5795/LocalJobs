@@ -4,6 +4,7 @@ using LocalJobs.Contracts.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using LocalJobs.Domain.Enums;
 
 namespace LocalJobs.Api.Controllers;
 
@@ -11,9 +12,6 @@ namespace LocalJobs.Api.Controllers;
 [Route("api/[controller]")]
 public class JobsController : ControllerBase
 {
-    // Temporary MVP UserId — will be replaced by JWT claim once auth is added
-    private static readonly Guid MvpUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
     private readonly IJobService _jobService;
 
     public JobsController(IJobService jobService)
@@ -55,16 +53,19 @@ public class JobsController : ControllerBase
 
     // POST /api/jobs
     [HttpPost]
+    [Authorize(Roles = nameof(AccountType.Employer))]
     public async Task<ActionResult<JobResponse>> CreateJob(
         [FromBody] CreateJobRequest request,
         CancellationToken cancellationToken)
     {
-        // MVP: userId is hardcoded. Replace with JWT claim (HttpContext.User) later.
-        var userId = MvpUserId;
-
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var employerId))
+        {
+            return Unauthorized();
+        }
         try
         {
-            var job = await _jobService.CreateJobAsync(request, userId, cancellationToken);
+            var job = await _jobService.CreateJobAsync(request, employerId, cancellationToken);
             if (job is null)
             {
                 return BadRequest("Job could not be created.");
@@ -76,13 +77,37 @@ public class JobsController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+    }
+
+    [HttpGet("me")]
+    [Authorize(Roles = nameof(AccountType.Employer))]
+    public async Task<ActionResult<List<JobResponse>>> GetMyJobs(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var employerId)) return Unauthorized();
+        return Ok(await _jobService.GetMyJobsAsync(employerId, cancellationToken));
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = nameof(AccountType.Employer))]
+    public async Task<ActionResult<JobResponse>> UpdateJob(Guid id, [FromBody] UpdateJobRequest request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var employerId)) return Unauthorized();
+        try
+        {
+            var job = await _jobService.UpdateJobAsync(id, employerId, request, cancellationToken);
+            return job is null ? NotFound() : Ok(job);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
     }
 
     // PUT /api/jobs/{id}/deactivate
     [HttpPut("{id:guid}/deactivate")]
+    [Authorize(Roles = nameof(AccountType.Employer))]
     public async Task<IActionResult> DeactivateJob(Guid id, CancellationToken cancellationToken)
     {
-        var success = await _jobService.DeactivateJobAsync(id, cancellationToken);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var employerId)) return Unauthorized();
+        var success = await _jobService.DeactivateJobAsync(id, employerId, cancellationToken);
         if (!success)
         {
             return NotFound($"Job with ID '{id}' was not found.");

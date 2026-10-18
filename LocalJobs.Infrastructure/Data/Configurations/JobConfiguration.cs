@@ -1,4 +1,5 @@
 using LocalJobs.Domain.Entities;
+using LocalJobs.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -22,6 +23,14 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
 
         builder.Property(j => j.Salary)
             .HasPrecision(18, 2);
+
+        builder.Property(j => j.PaymentPeriod)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(PaymentPeriod.Monthly);
+
+        builder.Property(j => j.WorkType).IsRequired().HasMaxLength(50).HasDefaultValue("");
+        builder.Property(j => j.ExperienceRequirement).IsRequired().HasMaxLength(200).HasDefaultValue("");
 
         builder.Property(j => j.IsActive)
             .HasDefaultValue(true);

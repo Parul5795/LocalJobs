@@ -4,4 +4,5 @@ public record RegisterUserRequest(
     string Name,
     string Email,
     string PhoneNumber,
-    string Password);
+    string Password,
+    string AccountType = "JobSeeker");

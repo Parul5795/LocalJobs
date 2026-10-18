@@ -1,3 +1,4 @@
+using System.Text;
 using LocalJobs.Application.Interfaces;
 using LocalJobs.Application.Services;
 using LocalJobs.Infrastructure.Data;
@@ -5,8 +6,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-// using Microsoft.OpenApi.Models;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +21,8 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 // Register Application services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IWorkerProfileService, WorkerProfileService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICityService, CityService>();
@@ -31,6 +32,22 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+// .AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new TokenValidationParameters
+//     {
+//         ValidateIssuer = false,
+//         ValidateAudience = false,
+//         ValidateLifetime = false,
+//         ValidateIssuerSigningKey = true,
+//         ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//         ValidAudience = builder.Configuration["Jwt:Audience"],
+//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+//             builder.Configuration["Jwt:Key"] ?? string.Empty)),
+//         ClockSkew = TimeSpan.Zero
+//     };
+// });
+
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -45,11 +62,27 @@ builder.Services.AddAuthentication(options =>
             builder.Configuration["Jwt:Key"] ?? string.Empty)),
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"JWT Error: {context.Exception}");
+            return Task.CompletedTask;
+        },
+
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token validated successfully");
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -66,19 +99,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter JWT Bearer token in the format: Bearer {token}"
     });
 
-//     options.AddSecurityRequirement(new OpenApiSecurityRequirement
-// {
-//     {
-//         new OpenApiSecurityScheme
-//         {
-//             Name = "Authorization",
-//             Type = SecuritySchemeType.Http,
-//             Scheme = "Bearer",
-//             In = ParameterLocation.Header
-//         },
-//         Array.Empty<string>()
-//     }
-// });
 });
 
 var app = builder.Build();

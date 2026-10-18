@@ -6,4 +6,8 @@ public record UpdateJobRequest(
     decimal? Salary,
     int CategoryId,
     int CityId,
-    bool IsActive);
+    bool IsActive,
+    string WorkType = "",
+    string ExperienceRequirement = "",
+    string PaymentPeriod = "Monthly",
+    DateTime? StartDate = null);

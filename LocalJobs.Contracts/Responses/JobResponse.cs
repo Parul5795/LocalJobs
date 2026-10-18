@@ -14,4 +14,9 @@ public record JobResponse(
     string UserName,
     bool IsActive,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string WorkType,
+    string ExperienceRequirement,
+    string PaymentPeriod,
+    DateTime? StartDate,
+    string Status);

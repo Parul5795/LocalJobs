@@ -7,6 +7,8 @@ public interface IApplicationDbContext
 {
     DbSet<User> Users { get; }
 
+    DbSet<WorkerProfile> WorkerProfiles { get; }
+
     DbSet<Category> Categories { get; }
 
     DbSet<City> Cities { get; }

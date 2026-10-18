@@ -5,7 +5,7 @@ namespace LocalJobs.Application.Services;
 
 public interface IJobService
 {
-    Task<JobResponse?> CreateJobAsync(CreateJobRequest request, Guid userId, CancellationToken cancellationToken = default);
+    Task<JobResponse?> CreateJobAsync(CreateJobRequest request, Guid employerId, CancellationToken cancellationToken = default);
 
     Task<JobResponse?> GetJobByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -13,5 +13,9 @@ public interface IJobService
 
     Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, CancellationToken cancellationToken = default);
 
-    Task<bool> DeactivateJobAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<List<JobResponse>> GetMyJobsAsync(Guid employerId, CancellationToken cancellationToken = default);
+
+    Task<JobResponse?> UpdateJobAsync(Guid id, Guid employerId, UpdateJobRequest request, CancellationToken cancellationToken = default);
+
+    Task<bool> DeactivateJobAsync(Guid id, Guid employerId, CancellationToken cancellationToken = default);
 }

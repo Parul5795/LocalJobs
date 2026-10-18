@@ -4,4 +4,5 @@ public record AuthResponse(
     string Token,
     Guid UserId,
     string Name,
-    string Email);
+    string Email,
+    string AccountType);

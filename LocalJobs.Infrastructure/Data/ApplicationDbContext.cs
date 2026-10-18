@@ -14,6 +14,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<WorkerProfile> WorkerProfiles => Set<WorkerProfile>();
+
     public DbSet<Category> Categories => Set<Category>();
 
     public DbSet<City> Cities => Set<City>();

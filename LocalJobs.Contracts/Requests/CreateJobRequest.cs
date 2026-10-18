@@ -5,4 +5,8 @@ public record CreateJobRequest(
     string Description,
     decimal? Salary,
     int CategoryId,
-    int CityId);
+    int CityId,
+    string WorkType = "",
+    string ExperienceRequirement = "",
+    string PaymentPeriod = "Monthly",
+    DateTime? StartDate = null);

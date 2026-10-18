@@ -20,6 +20,14 @@ public class UserService : IUserService
 
     public async Task<AuthResponse> RegisterAsync(RegisterUserRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.PhoneNumber) || string.IsNullOrWhiteSpace(request.Password) ||
+            !Enum.TryParse<LocalJobs.Domain.Enums.AccountType>(request.AccountType, true, out var accountType) ||
+            !Enum.IsDefined(accountType))
+        {
+            throw new ArgumentException("Name, email, phone, password, and a valid account type are required.");
+        }
+
         var email = request.Email.Trim();
         var normalizedEmail = email.ToLowerInvariant();
 
@@ -38,7 +46,8 @@ public class UserService : IUserService
             Name = request.Name.Trim(),
             Email = email,
             Phone = request.PhoneNumber.Trim(),
-            PasswordHash = passwordHash
+            PasswordHash = passwordHash,
+            AccountType = accountType
         };
 
         _context.Users.Add(user);
@@ -46,7 +55,7 @@ public class UserService : IUserService
 
         var token = _jwtTokenService.GenerateToken(user);
 
-        return new AuthResponse(token, user.Id, user.Name, user.Email);
+        return new AuthResponse(token, user.Id, user.Name, user.Email, user.AccountType.ToString());
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
@@ -68,6 +77,6 @@ public class UserService : IUserService
         }
 
         var token = _jwtTokenService.GenerateToken(user);
-        return new AuthResponse(token, user.Id, user.Name, user.Email);
+        return new AuthResponse(token, user.Id, user.Name, user.Email, user.AccountType.ToString());
     }
 }

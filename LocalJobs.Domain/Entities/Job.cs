@@ -1,6 +1,7 @@
 namespace LocalJobs.Domain.Entities;
 
 using LocalJobs.Domain.Common;
+using LocalJobs.Domain.Enums;
 
 public class Job : BaseEntity, IAuditable
 {
@@ -9,6 +10,14 @@ public class Job : BaseEntity, IAuditable
     public string Description { get; set; } = string.Empty;
 
     public decimal? Salary { get; set; }
+
+    public PaymentPeriod PaymentPeriod { get; set; } = PaymentPeriod.Monthly;
+
+    public string WorkType { get; set; } = string.Empty;
+
+    public string ExperienceRequirement { get; set; } = string.Empty;
+
+    public DateTime? StartDate { get; set; }
 
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
