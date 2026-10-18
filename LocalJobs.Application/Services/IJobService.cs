@@ -11,7 +11,7 @@ public interface IJobService
 
     Task<List<JobResponse>> GetJobsAsync(CancellationToken cancellationToken = default);
 
-    Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, CancellationToken cancellationToken = default);
+    Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, string? keyword, string? workType, string? experienceRequirement, string? paymentPeriod, CancellationToken cancellationToken = default);
 
     Task<List<JobResponse>> GetMyJobsAsync(Guid employerId, CancellationToken cancellationToken = default);
 

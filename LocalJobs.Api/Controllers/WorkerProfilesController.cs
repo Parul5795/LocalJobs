@@ -31,6 +31,7 @@ public class WorkerProfilesController(IWorkerProfileService workerProfileService
         try { return Ok(await workerProfileService.SaveMyProfileAsync(userId.Value, request, cancellationToken)); }
         catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     [HttpGet("{userId:guid}")]
@@ -39,6 +40,19 @@ public class WorkerProfilesController(IWorkerProfileService workerProfileService
     {
         var profile = await workerProfileService.GetPublicProfileAsync(userId, cancellationToken);
         return profile is null ? NotFound() : Ok(profile);
+    }
+
+    [HttpGet("search")]
+    [Authorize(Roles = nameof(AccountType.Employer))]
+    public async Task<ActionResult<List<WorkerSearchResultResponse>>> SearchWorkers(
+        [FromQuery] int? categoryId,
+        [FromQuery] int? cityId,
+        [FromQuery] bool? isFresher,
+        [FromQuery] string? keyword,
+        CancellationToken cancellationToken)
+    {
+        var results = await workerProfileService.SearchWorkersAsync(categoryId, cityId, isFresher, keyword, cancellationToken);
+        return Ok(results);
     }
 
     private Guid? CurrentUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;

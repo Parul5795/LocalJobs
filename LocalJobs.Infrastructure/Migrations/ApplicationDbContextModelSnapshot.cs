@@ -22,6 +22,127 @@ namespace LocalJobs.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Ad", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AdCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("IsActive", "CreatedAt");
+
+                    b.HasIndex("AdCategoryId", "CityId", "IsActive");
+
+                    b.ToTable("Ads", (string)null);
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.AdCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AdCategories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Jobs/Work"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Services"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Business/Shop"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Products for Sale"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Tuition"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "House/Room"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Vehicle"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Local Announcement"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Other"
+                        });
+                });
+
             modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
                 {
                     b.Property<Guid>("Id")
@@ -373,14 +494,41 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("CityId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
+                    b.HasIndex("CategoryId", "CityId", "IsFresher");
+
                     b.ToTable("WorkerProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Ad", b =>
+                {
+                    b.HasOne("LocalJobs.Domain.Entities.AdCategory", "AdCategory")
+                        .WithMany("Ads")
+                        .HasForeignKey("AdCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdCategory");
+
+                    b.Navigation("City");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
@@ -454,6 +602,11 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("City");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.AdCategory", b =>
+                {
+                    b.Navigation("Ads");
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.Category", b =>

@@ -8,5 +8,5 @@ public record SaveWorkerProfileRequest(
     string? ExperienceDetails,
     string? Skills,
     string? Interests,
-    string Availability,
+    string? Availability,
     string? About);

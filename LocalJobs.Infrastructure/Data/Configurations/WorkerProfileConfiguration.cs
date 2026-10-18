@@ -11,6 +11,7 @@ public class WorkerProfileConfiguration : IEntityTypeConfiguration<WorkerProfile
         builder.ToTable("WorkerProfiles");
         builder.HasKey(p => p.Id);
         builder.HasIndex(p => p.UserId).IsUnique();
+        builder.HasIndex(p => new { p.CategoryId, p.CityId, p.IsFresher });
         builder.Property(p => p.ExperienceYears).HasPrecision(5, 2);
         builder.Property(p => p.ExperienceDetails).HasMaxLength(1000).HasDefaultValue("");
         builder.Property(p => p.Skills).HasMaxLength(2000).HasDefaultValue("");

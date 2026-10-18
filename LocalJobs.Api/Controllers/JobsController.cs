@@ -40,15 +40,23 @@ public class JobsController : ControllerBase
         return Ok(job);
     }
 
-    // GET /api/jobs/search?cityId=1&categoryId=2
+    // GET /api/jobs/search?cityId=1&categoryId=2&keyword=driver
     [HttpGet("search")]
     public async Task<ActionResult<List<JobResponse>>> SearchJobs(
         [FromQuery] int? cityId,
         [FromQuery] int? categoryId,
+        [FromQuery] string? keyword,
+        [FromQuery] string? workType,
+        [FromQuery] string? experienceRequirement,
+        [FromQuery] string? paymentPeriod,
         CancellationToken cancellationToken)
     {
-        var jobs = await _jobService.SearchJobsAsync(cityId, categoryId, cancellationToken);
-        return Ok(jobs);
+        try
+        {
+            var jobs = await _jobService.SearchJobsAsync(cityId, categoryId, keyword, workType, experienceRequirement, paymentPeriod, cancellationToken);
+            return Ok(jobs);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
     }
 
     // POST /api/jobs

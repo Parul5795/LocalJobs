@@ -9,6 +9,10 @@ public interface IApplicationDbContext
 
     DbSet<WorkerProfile> WorkerProfiles { get; }
 
+    DbSet<Ad> Ads { get; }
+
+    DbSet<AdCategory> AdCategories { get; }
+
     DbSet<Category> Categories { get; }
 
     DbSet<City> Cities { get; }

@@ -16,6 +16,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<WorkerProfile> WorkerProfiles => Set<WorkerProfile>();
 
+    public DbSet<Ad> Ads => Set<Ad>();
+
+    public DbSet<AdCategory> AdCategories => Set<AdCategory>();
+
     public DbSet<Category> Categories => Set<Category>();
 
     public DbSet<City> Cities => Set<City>();

@@ -22,7 +22,7 @@ public class WorkerProfileService : IWorkerProfileService
         if (user.AccountType != AccountType.JobSeeker) throw new UnauthorizedAccessException("Only JobSeeker accounts can manage worker profiles.");
         if (request.ExperienceYears < 0 || request.ExperienceYears > 80 ||
             (request.IsFresher && request.ExperienceYears.GetValueOrDefault() > 0) ||
-            string.IsNullOrWhiteSpace(request.Availability) || request.Availability.Length > 100 ||
+            (request.Availability?.Length ?? 0) > 100 ||
             (request.ExperienceDetails?.Length ?? 0) > 1000 || (request.Skills?.Length ?? 0) > 2000 ||
             (request.Interests?.Length ?? 0) > 1000 || (request.About?.Length ?? 0) > 2000)
             throw new ArgumentException("Worker profile fields are invalid or exceed their allowed lengths.");
@@ -40,7 +40,7 @@ public class WorkerProfileService : IWorkerProfileService
         profile.IsFresher = request.IsFresher; profile.ExperienceYears = request.ExperienceYears;
         profile.ExperienceDetails = request.ExperienceDetails?.Trim() ?? "";
         profile.Skills = request.Skills?.Trim() ?? ""; profile.Interests = request.Interests?.Trim() ?? "";
-        profile.Availability = request.Availability.Trim(); profile.About = request.About?.Trim() ?? "";
+        profile.Availability = request.Availability?.Trim() ?? ""; profile.About = request.About?.Trim() ?? "";
         profile.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         return (await ProfileQuery().FirstAsync(p => p.UserId == userId, cancellationToken));
@@ -48,6 +48,28 @@ public class WorkerProfileService : IWorkerProfileService
 
     public Task<WorkerProfileResponse?> GetPublicProfileAsync(Guid userId, CancellationToken cancellationToken = default) =>
         ProfileQuery().FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+    public async Task<List<WorkerSearchResultResponse>> SearchWorkersAsync(
+        int? categoryId, int? cityId, bool? isFresher, string? keyword, CancellationToken cancellationToken = default)
+    {
+        var query = _context.WorkerProfiles.Where(p => p.User.AccountType == AccountType.JobSeeker);
+        if (categoryId.HasValue) query = query.Where(p => p.CategoryId == categoryId.Value);
+        if (cityId.HasValue) query = query.Where(p => p.CityId == cityId.Value);
+        if (isFresher.HasValue) query = query.Where(p => p.IsFresher == isFresher.Value);
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var term = keyword.Trim().ToLower();
+            query = query.Where(p => p.User.Name.ToLower().Contains(term) ||
+                p.Skills.ToLower().Contains(term) || p.Interests.ToLower().Contains(term) ||
+                p.About.ToLower().Contains(term) || p.ExperienceDetails.ToLower().Contains(term));
+        }
+
+        return await query.OrderBy(p => p.User.Name)
+            .Select(p => new WorkerSearchResultResponse(p.UserId, p.User.Name, p.CategoryId, p.Category.Name,
+                p.CityId, p.City.Name, p.City.State, p.IsFresher, p.ExperienceYears,
+                p.Skills, p.Interests, p.Availability, p.About))
+            .ToListAsync(cancellationToken);
+    }
 
     private IQueryable<WorkerProfileResponse> ProfileQuery() => _context.WorkerProfiles
         .Where(p => p.User.AccountType == AccountType.JobSeeker)

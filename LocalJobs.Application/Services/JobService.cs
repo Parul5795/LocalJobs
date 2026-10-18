@@ -114,7 +114,7 @@ public class JobService : IJobService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, CancellationToken cancellationToken = default)
+    public async Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, string? keyword, string? workType, string? experienceRequirement, string? paymentPeriod, CancellationToken cancellationToken = default)
     {
         var query = _context.Jobs.Where(j => j.IsActive);
 
@@ -126,6 +126,30 @@ public class JobService : IJobService
         if (categoryId.HasValue)
         {
             query = query.Where(j => j.CategoryId == categoryId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var term = keyword.Trim().ToLower();
+            query = query.Where(j => j.Title.ToLower().Contains(term) || j.Description.ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(workType))
+        {
+            var term = workType.Trim().ToLower();
+            query = query.Where(j => j.WorkType.ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(experienceRequirement))
+        {
+            var term = experienceRequirement.Trim().ToLower();
+            query = query.Where(j => j.ExperienceRequirement.ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(paymentPeriod))
+        {
+            var value = ParsePaymentPeriod(paymentPeriod);
+            query = query.Where(j => j.PaymentPeriod == value);
         }
 
         return await query
