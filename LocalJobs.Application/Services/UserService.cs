@@ -4,6 +4,7 @@ using LocalJobs.Contracts.Requests;
 using LocalJobs.Contracts.Responses;
 using LocalJobs.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 
 namespace LocalJobs.Application.Services;
 
@@ -20,8 +21,10 @@ public class UserService : IUserService
 
     public async Task<AuthResponse> RegisterAsync(RegisterUserRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.PhoneNumber) || string.IsNullOrWhiteSpace(request.Password) ||
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > 100 || string.IsNullOrWhiteSpace(request.Email) ||
+            request.Email.Trim().Length > 150 || !MailAddress.TryCreate(request.Email.Trim(), out _) ||
+            string.IsNullOrWhiteSpace(request.PhoneNumber) || request.PhoneNumber.Trim().Length > 20 ||
+            string.IsNullOrWhiteSpace(request.Password) || request.Password.Length is < 8 or > 128 ||
             !Enum.TryParse<LocalJobs.Domain.Enums.AccountType>(request.AccountType, true, out var accountType) ||
             !Enum.IsDefined(accountType))
         {
@@ -60,6 +63,8 @@ public class UserService : IUserService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Email) || request.Email.Length > 150 || string.IsNullOrWhiteSpace(request.Password) || request.Password.Length > 128)
+            throw new ArgumentException("Invalid email or password.");
         var email = request.Email.Trim();
 
         var user = await _context.Users

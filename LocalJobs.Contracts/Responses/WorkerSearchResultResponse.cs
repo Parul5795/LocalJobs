@@ -13,4 +13,7 @@ public record WorkerSearchResultResponse(
     string Skills,
     string Interests,
     string Availability,
-    string About);
+    string About,
+    string? Area = null,
+    string? ProfileImageUrl = null,
+    int ContactCount = 0);

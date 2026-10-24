@@ -12,6 +12,9 @@ public class WorkerProfile : BaseEntity, IAuditable
 
     public int CityId { get; set; }
     public City City { get; set; } = null!;
+    public string? Area { get; set; }
+    public string? ProfileImageUrl { get; set; }
+    public int ContactCount { get; set; }
 
     public bool IsFresher { get; set; }
     public decimal? ExperienceYears { get; set; }

@@ -19,4 +19,5 @@ public record JobResponse(
     string ExperienceRequirement,
     string PaymentPeriod,
     DateTime? StartDate,
-    string Status);
+    string Status,
+    string? Area = null);

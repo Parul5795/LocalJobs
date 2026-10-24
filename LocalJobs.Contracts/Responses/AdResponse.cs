@@ -14,4 +14,6 @@ public record AdResponse(
     string UserName,
     bool IsActive,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string? Area = null,
+    string[]? ImageUrls = null);

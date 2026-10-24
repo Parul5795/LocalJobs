@@ -9,4 +9,6 @@ public record SaveWorkerProfileRequest(
     string? Skills,
     string? Interests,
     string? Availability,
-    string? About);
+    string? About,
+    string? Area = null,
+    string? ProfileImageUrl = null);

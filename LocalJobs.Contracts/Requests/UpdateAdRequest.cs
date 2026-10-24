@@ -6,4 +6,6 @@ public record UpdateAdRequest(
     int AdCategoryId,
     int CityId,
     decimal? Price,
-    bool IsActive);
+    bool IsActive,
+    string? Area = null,
+    string[]? ImageUrls = null);

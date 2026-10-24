@@ -5,4 +5,6 @@ public record CreateAdRequest(
     string Description,
     int AdCategoryId,
     int CityId,
-    decimal? Price);
+    decimal? Price,
+    string? Area = null,
+    string[]? ImageUrls = null);

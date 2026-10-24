@@ -9,11 +9,11 @@ public interface IJobService
 
     Task<JobResponse?> GetJobByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<List<JobResponse>> GetJobsAsync(CancellationToken cancellationToken = default);
+    Task<PagedResponse<JobResponse>> GetJobsAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 
-    Task<List<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, string? keyword, string? workType, string? experienceRequirement, string? paymentPeriod, CancellationToken cancellationToken = default);
+    Task<PagedResponse<JobResponse>> SearchJobsAsync(int? cityId, int? categoryId, string? area, string? keyword, string? workType, string? experienceRequirement, string? paymentPeriod, int page, int pageSize, CancellationToken cancellationToken = default);
 
-    Task<List<JobResponse>> GetMyJobsAsync(Guid employerId, CancellationToken cancellationToken = default);
+    Task<PagedResponse<JobResponse>> GetMyJobsAsync(Guid employerId, int page, int pageSize, CancellationToken cancellationToken = default);
 
     Task<JobResponse?> UpdateJobAsync(Guid id, Guid employerId, UpdateJobRequest request, CancellationToken cancellationToken = default);
 

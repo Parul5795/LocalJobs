@@ -35,6 +35,11 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.Property(j => j.IsActive)
             .HasDefaultValue(true);
 
+        builder.Property(j => j.Area).HasMaxLength(100);
+        builder.HasIndex(j => new { j.IsActive, j.CreatedAt });
+        builder.HasIndex(j => new { j.CityId, j.CategoryId, j.IsActive, j.CreatedAt });
+        builder.HasIndex(j => new { j.CityId, j.Area, j.IsActive });
+
         // Relationships
         builder.HasOne(j => j.Category)
             .WithMany(c => c.Jobs)

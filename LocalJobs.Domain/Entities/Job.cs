@@ -24,6 +24,7 @@ public class Job : BaseEntity, IAuditable
 
     public int CityId { get; set; }
     public City City { get; set; } = null!;
+    public string? Area { get; set; }
 
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;

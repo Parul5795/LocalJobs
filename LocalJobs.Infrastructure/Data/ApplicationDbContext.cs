@@ -25,6 +25,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<City> Cities => Set<City>();
 
     public DbSet<Job> Jobs => Set<Job>();
+    public DbSet<Contact> Contacts => Set<Contact>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

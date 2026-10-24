@@ -31,6 +31,10 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Property<int>("AdCategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Area")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
 
@@ -41,6 +45,12 @@ namespace LocalJobs.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(3000)
                         .HasColumnType("character varying(3000)");
+
+                    b.PrimitiveCollection<string[]>("ImageUrls")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasDefaultValueSql("ARRAY[]::text[]");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -64,13 +74,15 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CityId");
+                    b.HasIndex("AdCategoryId");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("IsActive", "CreatedAt");
 
-                    b.HasIndex("AdCategoryId", "CityId", "IsActive");
+                    b.HasIndex("CityId", "Area", "IsActive");
+
+                    b.HasIndex("CityId", "AdCategoryId", "IsActive", "CreatedAt");
 
                     b.ToTable("Ads", (string)null);
                 });
@@ -270,11 +282,44 @@ namespace LocalJobs.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("WorkerUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployerUserId", "CreatedAt");
+
+                    b.HasIndex("WorkerUserId", "CreatedAt");
+
+                    b.ToTable("Contacts", (string)null);
+                });
+
             modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Area")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
@@ -338,9 +383,13 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CityId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("IsActive", "CreatedAt");
+
+                    b.HasIndex("CityId", "Area", "IsActive");
+
+                    b.HasIndex("CityId", "CategoryId", "IsActive", "CreatedAt");
 
                     b.ToTable("Jobs", (string)null);
                 });
@@ -405,6 +454,10 @@ namespace LocalJobs.Infrastructure.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasDefaultValue("");
 
+                    b.Property<string>("Area")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Availability")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -417,6 +470,11 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
+
+                    b.Property<int>("ContactCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -442,6 +500,10 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Property<bool>("IsFresher")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ProfileImageUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<string>("Skills")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -462,7 +524,7 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.HasIndex("CategoryId", "CityId", "IsFresher");
+                    b.HasIndex("CategoryId", "CityId", "Area", "IsFresher");
 
                     b.ToTable("WorkerProfiles", (string)null);
                 });
@@ -492,6 +554,21 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("City");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Contact", b =>
+                {
+                    b.HasOne("LocalJobs.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("EmployerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("WorkerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>

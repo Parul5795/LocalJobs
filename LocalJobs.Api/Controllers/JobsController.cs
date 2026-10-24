@@ -21,10 +21,10 @@ public class JobsController : ControllerBase
 
     // GET /api/jobs
     [HttpGet]
-    public async Task<ActionResult<List<JobResponse>>> GetJobs(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<JobResponse>>> GetJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        var jobs = await _jobService.GetJobsAsync(cancellationToken);
-        return Ok(jobs);
+        try { return Ok(await _jobService.GetJobsAsync(page, pageSize, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid pagination", Detail = ex.Message }); }
     }
 
     // GET /api/jobs/{id}
@@ -34,7 +34,7 @@ public class JobsController : ControllerBase
         var job = await _jobService.GetJobByIdAsync(id, cancellationToken);
         if (job is null)
         {
-            return NotFound($"Job with ID '{id}' was not found or is inactive.");
+            return NotFound(new ProblemDetails { Status = 404, Title = "Job not found", Detail = "The job was not found or is inactive." });
         }
 
         return Ok(job);
@@ -42,21 +42,24 @@ public class JobsController : ControllerBase
 
     // GET /api/jobs/search?cityId=1&categoryId=2&keyword=driver
     [HttpGet("search")]
-    public async Task<ActionResult<List<JobResponse>>> SearchJobs(
+    public async Task<ActionResult<PagedResponse<JobResponse>>> SearchJobs(
         [FromQuery] int? cityId,
         [FromQuery] int? categoryId,
+        [FromQuery] string? area,
         [FromQuery] string? keyword,
         [FromQuery] string? workType,
         [FromQuery] string? experienceRequirement,
         [FromQuery] string? paymentPeriod,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var jobs = await _jobService.SearchJobsAsync(cityId, categoryId, keyword, workType, experienceRequirement, paymentPeriod, cancellationToken);
+            var jobs = await _jobService.SearchJobsAsync(cityId, categoryId, area, keyword, workType, experienceRequirement, paymentPeriod, page, pageSize, cancellationToken);
             return Ok(jobs);
         }
-        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (ArgumentException ex) { return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid search filters", Detail = ex.Message }); }
     }
 
     // POST /api/jobs
@@ -76,24 +79,25 @@ public class JobsController : ControllerBase
             var job = await _jobService.CreateJobAsync(request, employerId, cancellationToken);
             if (job is null)
             {
-                return BadRequest("Job could not be created.");
+                return BadRequest(new ProblemDetails { Status = 400, Title = "Job could not be created" });
             }
 
             return CreatedAtAction(nameof(GetJobById), new { id = job.Id }, job);
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid job", Detail = ex.Message });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     [HttpGet("me")]
     [Authorize(Roles = nameof(AccountType.Employer))]
-    public async Task<ActionResult<List<JobResponse>>> GetMyJobs(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<JobResponse>>> GetMyJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var employerId)) return Unauthorized();
-        return Ok(await _jobService.GetMyJobsAsync(employerId, cancellationToken));
+        try { return Ok(await _jobService.GetMyJobsAsync(employerId, page, pageSize, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid pagination", Detail = ex.Message }); }
     }
 
     [HttpPut("{id:guid}")]
@@ -104,9 +108,9 @@ public class JobsController : ControllerBase
         try
         {
             var job = await _jobService.UpdateJobAsync(id, employerId, request, cancellationToken);
-            return job is null ? NotFound() : Ok(job);
+            return job is null ? NotFound(new ProblemDetails { Status = 404, Title = "Job not found" }) : Ok(job);
         }
-        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (ArgumentException ex) { return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid job", Detail = ex.Message }); }
     }
 
     // PUT /api/jobs/{id}/deactivate
@@ -118,7 +122,7 @@ public class JobsController : ControllerBase
         var success = await _jobService.DeactivateJobAsync(id, employerId, cancellationToken);
         if (!success)
         {
-            return NotFound($"Job with ID '{id}' was not found.");
+            return NotFound(new ProblemDetails { Status = 404, Title = "Job not found" });
         }
 
         return NoContent();

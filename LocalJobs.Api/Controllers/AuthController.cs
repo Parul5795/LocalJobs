@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid registration request", Detail = ex.Message });
         }
     }
 
@@ -42,9 +42,9 @@ public class AuthController : ControllerBase
             var response = await _userService.LoginAsync(request, cancellationToken);
             return Ok(response);
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            return Unauthorized(ex.Message);
+            return Unauthorized(new ProblemDetails { Status = 401, Title = "Authentication failed", Detail = "Invalid email or password." });
         }
     }
 }

@@ -9,4 +9,5 @@ public record CreateJobRequest(
     string WorkType = "",
     string ExperienceRequirement = "",
     string PaymentPeriod = "Monthly",
-    DateTime? StartDate = null);
+    DateTime? StartDate = null,
+    string? Area = null);

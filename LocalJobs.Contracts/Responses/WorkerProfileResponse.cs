@@ -16,4 +16,7 @@ public record WorkerProfileResponse(
     string Availability,
     string About,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string? Area = null,
+    string? ProfileImageUrl = null,
+    int ContactCount = 0);

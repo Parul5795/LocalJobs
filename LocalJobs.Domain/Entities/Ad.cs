@@ -10,6 +10,8 @@ public class Ad : BaseEntity, IAuditable
     public AdCategory AdCategory { get; set; } = null!;
     public int CityId { get; set; }
     public City City { get; set; } = null!;
+    public string? Area { get; set; }
+    public string[] ImageUrls { get; set; } = [];
     public decimal? Price { get; set; }
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;

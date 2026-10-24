@@ -18,6 +18,7 @@ public interface IApplicationDbContext
     DbSet<City> Cities { get; }
 
     DbSet<Job> Jobs { get; }
+    DbSet<Contact> Contacts { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
