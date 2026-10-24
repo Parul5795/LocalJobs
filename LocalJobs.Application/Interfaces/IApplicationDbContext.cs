@@ -19,7 +19,5 @@ public interface IApplicationDbContext
 
     DbSet<Job> Jobs { get; }
 
-    DbSet<LocalJobs.Domain.Entities.Application> Applications { get; }
-
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

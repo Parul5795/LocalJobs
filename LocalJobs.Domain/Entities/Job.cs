@@ -34,6 +34,4 @@ public class Job : BaseEntity, IAuditable
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
-    public ICollection<Application> Applications { get; set; } = new List<Application>();
 }

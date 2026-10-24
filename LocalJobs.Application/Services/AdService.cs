@@ -15,14 +15,14 @@ public class AdService : IAdService
         _context.AdCategories.OrderBy(c => c.Name).Select(c => new AdCategoryResponse(c.Id, c.Name)).ToListAsync(cancellationToken);
 
     public Task<List<AdResponse>> GetAdsAsync(CancellationToken cancellationToken = default) =>
-        AdQuery().Where(a => a.IsActive).OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
+        Project(_context.Ads.Where(a => a.IsActive).OrderByDescending(a => a.CreatedAt)).ToListAsync(cancellationToken);
 
     public Task<AdResponse?> GetAdByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        AdQuery().FirstOrDefaultAsync(a => a.Id == id && a.IsActive, cancellationToken);
+        Project(_context.Ads.Where(a => a.Id == id && a.IsActive)).FirstOrDefaultAsync(cancellationToken);
 
     public Task<List<AdResponse>> SearchAdsAsync(int? cityId, int? adCategoryId, string? keyword, CancellationToken cancellationToken = default)
     {
-        var query = AdQuery().Where(a => a.IsActive);
+        var query = _context.Ads.Where(a => a.IsActive);
         if (cityId.HasValue) query = query.Where(a => a.CityId == cityId.Value);
         if (adCategoryId.HasValue) query = query.Where(a => a.AdCategoryId == adCategoryId.Value);
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -30,7 +30,7 @@ public class AdService : IAdService
             var term = keyword.Trim().ToLower();
             query = query.Where(a => a.Title.ToLower().Contains(term) || a.Description.ToLower().Contains(term));
         }
-        return query.OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
+        return Project(query.OrderByDescending(a => a.CreatedAt)).ToListAsync(cancellationToken);
     }
 
     public async Task<AdResponse> CreateAdAsync(CreateAdRequest request, Guid userId, CancellationToken cancellationToken = default)
@@ -47,11 +47,11 @@ public class AdService : IAdService
         };
         _context.Ads.Add(ad);
         await _context.SaveChangesAsync(cancellationToken);
-        return (await AdQuery().FirstAsync(a => a.Id == ad.Id, cancellationToken));
+        return await Project(_context.Ads.Where(a => a.Id == ad.Id)).FirstAsync(cancellationToken);
     }
 
     public Task<List<AdResponse>> GetMyAdsAsync(Guid userId, CancellationToken cancellationToken = default) =>
-        AdQuery().Where(a => a.UserId == userId).OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
+        Project(_context.Ads.Where(a => a.UserId == userId).OrderByDescending(a => a.CreatedAt)).ToListAsync(cancellationToken);
 
     public async Task<AdResponse?> UpdateAdAsync(Guid id, UpdateAdRequest request, Guid userId, CancellationToken cancellationToken = default)
     {
@@ -63,7 +63,7 @@ public class AdService : IAdService
         ad.AdCategoryId = request.AdCategoryId; ad.CityId = request.CityId; ad.Price = request.Price;
         ad.IsActive = request.IsActive; ad.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
-        return await AdQuery().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        return await Project(_context.Ads.Where(a => a.Id == id)).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<bool> DeactivateAdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
@@ -75,7 +75,7 @@ public class AdService : IAdService
         return true;
     }
 
-    private IQueryable<AdResponse> AdQuery() => _context.Ads.Select(a => new AdResponse(
+    private static IQueryable<AdResponse> Project(IQueryable<Ad> query) => query.Select(a => new AdResponse(
         a.Id, a.Title, a.Description, a.AdCategoryId, a.AdCategory.Name, a.CityId, a.City.Name, a.City.State,
         a.Price, a.UserId, a.User.Name, a.IsActive, a.CreatedAt, a.UpdatedAt));
 

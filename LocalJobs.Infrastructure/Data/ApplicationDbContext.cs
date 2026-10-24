@@ -26,8 +26,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<Job> Jobs => Set<Job>();
 
-    public DbSet<LocalJobs.Domain.Entities.Application> Applications => Set<LocalJobs.Domain.Entities.Application>();
-
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker

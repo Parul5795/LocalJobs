@@ -13,7 +13,7 @@ public class WorkerProfileService : IWorkerProfileService
     public WorkerProfileService(IApplicationDbContext context) => _context = context;
 
     public Task<WorkerProfileResponse?> GetMyProfileAsync(Guid userId, CancellationToken cancellationToken = default) =>
-        ProfileQuery().FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        ProfileQuery(userId).FirstOrDefaultAsync(cancellationToken);
 
     public async Task<WorkerProfileResponse> SaveMyProfileAsync(Guid userId, SaveWorkerProfileRequest request, CancellationToken cancellationToken = default)
     {
@@ -43,11 +43,11 @@ public class WorkerProfileService : IWorkerProfileService
         profile.Availability = request.Availability?.Trim() ?? ""; profile.About = request.About?.Trim() ?? "";
         profile.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
-        return (await ProfileQuery().FirstAsync(p => p.UserId == userId, cancellationToken));
+        return await ProfileQuery(userId).FirstAsync(cancellationToken);
     }
 
     public Task<WorkerProfileResponse?> GetPublicProfileAsync(Guid userId, CancellationToken cancellationToken = default) =>
-        ProfileQuery().FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        ProfileQuery(userId).FirstOrDefaultAsync(cancellationToken);
 
     public async Task<List<WorkerSearchResultResponse>> SearchWorkersAsync(
         int? categoryId, int? cityId, bool? isFresher, string? keyword, CancellationToken cancellationToken = default)
@@ -71,8 +71,8 @@ public class WorkerProfileService : IWorkerProfileService
             .ToListAsync(cancellationToken);
     }
 
-    private IQueryable<WorkerProfileResponse> ProfileQuery() => _context.WorkerProfiles
-        .Where(p => p.User.AccountType == AccountType.JobSeeker)
+    private IQueryable<WorkerProfileResponse> ProfileQuery(Guid userId) => _context.WorkerProfiles
+        .Where(p => p.UserId == userId && p.User.AccountType == AccountType.JobSeeker)
         .Select(p => new WorkerProfileResponse(p.UserId, p.User.Name, p.CategoryId, p.Category.Name,
             p.CityId, p.City.Name, p.City.State, p.IsFresher, p.ExperienceYears, p.ExperienceDetails,
             p.Skills, p.Interests, p.Availability, p.About, p.CreatedAt, p.UpdatedAt));

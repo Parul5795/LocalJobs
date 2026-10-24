@@ -143,43 +143,6 @@ namespace LocalJobs.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CoverLetter")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Applications", (string)null);
-                });
-
             modelBuilder.Entity("LocalJobs.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -531,25 +494,6 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
-                {
-                    b.HasOne("LocalJobs.Domain.Entities.Job", "Job")
-                        .WithMany("Applications")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LocalJobs.Domain.Entities.User", "User")
-                        .WithMany("Applications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Job");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>
                 {
                     b.HasOne("LocalJobs.Domain.Entities.Category", "Category")
@@ -619,15 +563,8 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("Jobs");
                 });
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>
-                {
-                    b.Navigation("Applications");
-                });
-
             modelBuilder.Entity("LocalJobs.Domain.Entities.User", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("PostedJobs");
 
                     b.Navigation("WorkerProfile");

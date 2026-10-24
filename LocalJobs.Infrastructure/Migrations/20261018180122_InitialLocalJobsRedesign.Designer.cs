@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LocalJobs.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260620154428_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20261018180122_InitialLocalJobsRedesign")]
+    partial class InitialLocalJobsRedesign
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,27 +25,39 @@ namespace LocalJobs.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Ad", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CoverLetter")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                    b.Property<int>("AdCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
+                    b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -55,11 +67,83 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("JobId");
+                    b.HasIndex("CityId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Applications", (string)null);
+                    b.HasIndex("IsActive", "CreatedAt");
+
+                    b.HasIndex("AdCategoryId", "CityId", "IsActive");
+
+                    b.ToTable("Ads", (string)null);
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.AdCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AdCategories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Jobs/Work"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Services"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Business/Shop"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Products for Sale"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Tuition"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "House/Room"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Vehicle"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Local Announcement"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Other"
+                        });
                 });
 
             modelBuilder.Entity("LocalJobs.Domain.Entities.Category", b =>
@@ -209,14 +293,31 @@ namespace LocalJobs.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("ExperienceRequirement")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("PaymentPeriod")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Monthly");
+
                     b.Property<decimal?>("Salary")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -228,6 +329,13 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("WorkType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("");
 
                     b.HasKey("Id");
 
@@ -245,6 +353,13 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("AccountType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("JobSeeker");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -280,21 +395,104 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Application", b =>
+            modelBuilder.Entity("LocalJobs.Domain.Entities.WorkerProfile", b =>
                 {
-                    b.HasOne("LocalJobs.Domain.Entities.Job", "Job")
-                        .WithMany("Applications")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("About")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("Availability")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExperienceDetails")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasDefaultValue("");
+
+                    b.Property<decimal?>("ExperienceYears")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("Interests")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasDefaultValue("");
+
+                    b.Property<bool>("IsFresher")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Skills")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasDefaultValue("");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("CategoryId", "CityId", "IsFresher");
+
+                    b.ToTable("WorkerProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.Ad", b =>
+                {
+                    b.HasOne("LocalJobs.Domain.Entities.AdCategory", "AdCategory")
+                        .WithMany("Ads")
+                        .HasForeignKey("AdCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("LocalJobs.Domain.Entities.User", "User")
-                        .WithMany("Applications")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Job");
+                    b.Navigation("AdCategory");
+
+                    b.Navigation("City");
 
                     b.Navigation("User");
                 });
@@ -326,6 +524,38 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("LocalJobs.Domain.Entities.WorkerProfile", b =>
+                {
+                    b.HasOne("LocalJobs.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalJobs.Domain.Entities.User", "User")
+                        .WithOne("WorkerProfile")
+                        .HasForeignKey("LocalJobs.Domain.Entities.WorkerProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("City");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LocalJobs.Domain.Entities.AdCategory", b =>
+                {
+                    b.Navigation("Ads");
+                });
+
             modelBuilder.Entity("LocalJobs.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Jobs");
@@ -336,16 +566,11 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Navigation("Jobs");
                 });
 
-            modelBuilder.Entity("LocalJobs.Domain.Entities.Job", b =>
-                {
-                    b.Navigation("Applications");
-                });
-
             modelBuilder.Entity("LocalJobs.Domain.Entities.User", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("PostedJobs");
+
+                    b.Navigation("WorkerProfile");
                 });
 #pragma warning restore 612, 618
         }
