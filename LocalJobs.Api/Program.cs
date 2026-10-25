@@ -77,6 +77,25 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevelopmentCors", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(origin =>
+                Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttp &&
+                uri.UserInfo.Length == 0 &&
+                uri.AbsolutePath == "/" &&
+                uri.Query.Length == 0 &&
+                uri.Fragment.Length == 0 &&
+                (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(uri.Host, "127.0.0.1", StringComparison.Ordinal)))
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .WithHeaders("Authorization", "Content-Type", "Accept");
+    });
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -98,8 +117,11 @@ var app = builder.Build();
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
+app.UseRouting();
+
 if (app.Environment.IsDevelopment())
 {
+    app.UseCors("DevelopmentCors");
     app.MapOpenApi();
 }
 

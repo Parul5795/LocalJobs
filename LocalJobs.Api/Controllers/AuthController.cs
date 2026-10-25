@@ -30,6 +30,10 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid registration request", Detail = ex.Message });
         }
+        catch (UserEmailConflictException ex)
+        {
+            return Conflict(new ProblemDetails { Status = 409, Title = "Email already registered", Detail = ex.Message });
+        }
     }
 
     [HttpPost("login")]

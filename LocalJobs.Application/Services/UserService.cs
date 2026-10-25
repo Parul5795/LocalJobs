@@ -23,7 +23,7 @@ public class UserService : IUserService
     {
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > 100 || string.IsNullOrWhiteSpace(request.Email) ||
             request.Email.Trim().Length > 150 || !MailAddress.TryCreate(request.Email.Trim(), out _) ||
-            string.IsNullOrWhiteSpace(request.PhoneNumber) || request.PhoneNumber.Trim().Length > 20 ||
+            !IsValidPhone(request.PhoneNumber) ||
             string.IsNullOrWhiteSpace(request.Password) || request.Password.Length is < 8 or > 128 ||
             !Enum.TryParse<LocalJobs.Domain.Enums.AccountType>(request.AccountType, true, out var accountType) ||
             !Enum.IsDefined(accountType))
@@ -37,10 +37,7 @@ public class UserService : IUserService
         var emailExists = await _context.Users
             .AnyAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
-        if (emailExists)
-        {
-            throw new ArgumentException("A user with this email already exists.");
-        }
+        if (emailExists) throw new UserEmailConflictException();
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -84,4 +81,37 @@ public class UserService : IUserService
         var token = _jwtTokenService.GenerateToken(user);
         return new AuthResponse(token, user.Id, user.Name, user.Email, user.AccountType.ToString());
     }
+
+    public async Task<UserResponse?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        return user is null ? null : ToUserResponse(user);
+    }
+
+    public async Task<UserResponse> UpdateAsync(Guid userId, UpdateUserRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > 100 ||
+            string.IsNullOrWhiteSpace(request.Email) || request.Email.Trim().Length > 150 || !MailAddress.TryCreate(request.Email.Trim(), out _) ||
+            !IsValidPhone(request.PhoneNumber))
+            throw new ArgumentException("Name, a valid email, and phone number are required and must fit their allowed lengths.");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+            ?? throw new KeyNotFoundException("User was not found.");
+        var email = request.Email.Trim();
+        var normalizedEmail = email.ToLowerInvariant();
+        if (await _context.Users.AnyAsync(u => u.Id != userId && u.Email.ToLower() == normalizedEmail, cancellationToken))
+            throw new UserEmailConflictException();
+
+        user.Name = request.Name.Trim();
+        user.Email = email;
+        user.Phone = request.PhoneNumber.Trim();
+        await _context.SaveChangesAsync(cancellationToken);
+        return ToUserResponse(user);
+    }
+
+    private static UserResponse ToUserResponse(User user) =>
+        new(user.Id, user.Name, user.Email, user.Phone, user.AccountType.ToString());
+
+    private static bool IsValidPhone(string? value) => !string.IsNullOrWhiteSpace(value) && value.Trim().Length <= 20 &&
+        value.Any(char.IsDigit) && value.All(c => char.IsDigit(c) || c is '+' or '(' or ')' or '.' or '-' || char.IsWhiteSpace(c));
 }
