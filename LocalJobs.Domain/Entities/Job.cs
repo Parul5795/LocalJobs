@@ -26,6 +26,11 @@ public class Job : BaseEntity, IAuditable
     public City City { get; set; } = null!;
     public string? Area { get; set; }
 
+    public string ContactPersonName { get; set; } = string.Empty;
+    public string ContactMobileNumber { get; set; } = string.Empty;
+    public bool AllowPhoneCall { get; set; }
+    public bool AllowWhatsApp { get; set; }
+
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 

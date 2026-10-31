@@ -11,6 +11,10 @@ public class Ad : BaseEntity, IAuditable
     public int CityId { get; set; }
     public City City { get; set; } = null!;
     public string? Area { get; set; }
+    public string ContactPersonName { get; set; } = string.Empty;
+    public string ContactMobileNumber { get; set; } = string.Empty;
+    public bool AllowPhoneCall { get; set; }
+    public bool AllowWhatsApp { get; set; }
     public string[] ImageUrls { get; set; } = [];
     public decimal? Price { get; set; }
     public Guid UserId { get; set; }

@@ -4,4 +4,5 @@
   <Project Path="LocalJobs.Contracts/LocalJobs.Contracts.csproj" />
   <Project Path="LocalJobs.Domain/LocalJobs.Domain.csproj" />
   <Project Path="LocalJobs.Infrastructure/LocalJobs.Infrastructure.csproj" />
+  <Project Path="LocalJobs.Tests/LocalJobs.Tests.csproj" />
 </Solution>

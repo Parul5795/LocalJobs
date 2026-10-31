@@ -17,6 +17,7 @@ public class JobService(IApplicationDbContext context) : IJobService
         if (employer.AccountType != AccountType.Employer) throw new UnauthorizedAccessException("Only Employer accounts can create jobs.");
         var paymentPeriod = ParsePaymentPeriod(request.PaymentPeriod);
         ValidateJob(request.Title, request.Description, request.Salary, request.WorkType, request.ExperienceRequirement, request.StartDate, request.Area);
+        ValidateContact(request.ContactPersonName, request.ContactMobileNumber, request.AllowPhoneCall, request.AllowWhatsApp);
         await ValidateCategoryAndCity(request.CategoryId, request.CityId, cancellationToken);
 
         var job = new Job
@@ -24,7 +25,9 @@ public class JobService(IApplicationDbContext context) : IJobService
             Id = Guid.NewGuid(), Title = request.Title.Trim(), Description = request.Description.Trim(), Salary = request.Salary,
             CategoryId = request.CategoryId, CityId = request.CityId, Area = TrimOrNull(request.Area), UserId = employerId,
             WorkType = request.WorkType.Trim(), ExperienceRequirement = request.ExperienceRequirement.Trim(),
-            PaymentPeriod = paymentPeriod, StartDate = NormalizeUtc(request.StartDate), IsActive = true
+            PaymentPeriod = paymentPeriod, StartDate = NormalizeUtc(request.StartDate), IsActive = true,
+            ContactPersonName = request.ContactPersonName.Trim(), ContactMobileNumber = request.ContactMobileNumber.Trim(),
+            AllowPhoneCall = request.AllowPhoneCall, AllowWhatsApp = request.AllowWhatsApp
         };
         context.Jobs.Add(job);
         await context.SaveChangesAsync(cancellationToken);
@@ -32,7 +35,7 @@ public class JobService(IApplicationDbContext context) : IJobService
     }
 
     public Task<JobResponse?> GetJobByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        Project(context.Jobs.Where(j => j.Id == id && j.IsActive)).FirstOrDefaultAsync(cancellationToken);
+        Project(context.Jobs.Where(j => j.Id == id && j.IsActive), includeContactMobile: true).FirstOrDefaultAsync(cancellationToken);
 
     public Task<PagedResponse<JobResponse>> GetJobsAsync(int page, int pageSize, CancellationToken cancellationToken = default) =>
         ToPageAsync(context.Jobs.Where(j => j.IsActive), page, pageSize, cancellationToken);
@@ -60,7 +63,7 @@ public class JobService(IApplicationDbContext context) : IJobService
     }
 
     public Task<PagedResponse<JobResponse>> GetMyJobsAsync(Guid employerId, int page, int pageSize, CancellationToken cancellationToken = default) =>
-        ToPageAsync(context.Jobs.Where(j => j.UserId == employerId), page, pageSize, cancellationToken);
+        ToPageAsync(context.Jobs.Where(j => j.UserId == employerId), page, pageSize, cancellationToken, includeContactMobile: true);
 
     public async Task<JobResponse?> UpdateJobAsync(Guid id, Guid employerId, UpdateJobRequest request, CancellationToken cancellationToken = default)
     {
@@ -68,13 +71,16 @@ public class JobService(IApplicationDbContext context) : IJobService
         if (job is null || job.UserId != employerId) return null;
         var paymentPeriod = ParsePaymentPeriod(request.PaymentPeriod);
         ValidateJob(request.Title, request.Description, request.Salary, request.WorkType, request.ExperienceRequirement, request.StartDate, request.Area);
+        ValidateContact(request.ContactPersonName, request.ContactMobileNumber, request.AllowPhoneCall, request.AllowWhatsApp);
         await ValidateCategoryAndCity(request.CategoryId, request.CityId, cancellationToken);
         job.Title = request.Title.Trim(); job.Description = request.Description.Trim(); job.Salary = request.Salary;
         job.CategoryId = request.CategoryId; job.CityId = request.CityId; job.Area = TrimOrNull(request.Area); job.IsActive = request.IsActive;
         job.WorkType = request.WorkType.Trim(); job.ExperienceRequirement = request.ExperienceRequirement.Trim();
         job.PaymentPeriod = paymentPeriod; job.StartDate = NormalizeUtc(request.StartDate); job.UpdatedAt = DateTime.UtcNow;
+        job.ContactPersonName = request.ContactPersonName.Trim(); job.ContactMobileNumber = request.ContactMobileNumber.Trim();
+        job.AllowPhoneCall = request.AllowPhoneCall; job.AllowWhatsApp = request.AllowWhatsApp;
         await context.SaveChangesAsync(cancellationToken);
-        return await Project(context.Jobs.Where(j => j.Id == id)).FirstAsync(cancellationToken);
+        return await Project(context.Jobs.Where(j => j.Id == id), includeContactMobile: true).FirstAsync(cancellationToken);
     }
 
     public async Task<bool> DeactivateJobAsync(Guid id, Guid employerId, CancellationToken cancellationToken = default)
@@ -86,17 +92,18 @@ public class JobService(IApplicationDbContext context) : IJobService
         return true;
     }
 
-    private static IQueryable<JobResponse> Project(IQueryable<Job> query) => query.Select(j => new JobResponse(
+    private static IQueryable<JobResponse> Project(IQueryable<Job> query, bool includeContactMobile = false) => query.Select(j => new JobResponse(
         j.Id, j.Title, j.Description, j.Salary, j.CategoryId, j.Category.Name, j.CityId, j.City.Name, j.City.State,
         j.UserId, j.User.Name, j.IsActive, j.CreatedAt, j.UpdatedAt, j.WorkType, j.ExperienceRequirement,
-        j.PaymentPeriod.ToString(), j.StartDate, j.IsActive ? "Active" : "Inactive", j.Area));
+        j.PaymentPeriod.ToString(), j.StartDate, j.IsActive ? "Active" : "Inactive", j.Area, j.ContactPersonName,
+        includeContactMobile ? j.ContactMobileNumber : null, j.AllowPhoneCall, j.AllowWhatsApp));
 
-    private async Task<PagedResponse<JobResponse>> ToPageAsync(IQueryable<Job> query, int page, int pageSize, CancellationToken cancellationToken)
+    private async Task<PagedResponse<JobResponse>> ToPageAsync(IQueryable<Job> query, int page, int pageSize, CancellationToken cancellationToken, bool includeContactMobile = false)
     {
         ValidatePage(page, pageSize);
         var total = await query.CountAsync(cancellationToken);
         var items = await Project(query.OrderByDescending(j => j.CreatedAt).ThenBy(j => j.Id)
-            .Skip((page - 1) * pageSize).Take(pageSize)).ToListAsync(cancellationToken);
+            .Skip((page - 1) * pageSize).Take(pageSize), includeContactMobile).ToListAsync(cancellationToken);
         return new PagedResponse<JobResponse>(items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
     }
 
@@ -110,6 +117,14 @@ public class JobService(IApplicationDbContext context) : IJobService
     private static PaymentPeriod ParsePaymentPeriod(string value) =>
         Enum.TryParse<PaymentPeriod>(value, true, out var period) && Enum.IsDefined(period)
             ? period : throw new ArgumentException("PaymentPeriod must be Monthly, Daily, Hourly, or Fixed.");
+
+    private static void ValidateContact(string name, string mobile, bool allowPhoneCall, bool allowWhatsApp)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 100 ||
+            !System.Text.RegularExpressions.Regex.IsMatch(mobile ?? "", @"^(?:\+91)?[6-9][0-9]{9}\z") ||
+            (!allowPhoneCall && !allowWhatsApp))
+            throw new ArgumentException("Contact name, a valid Indian mobile number, and at least one contact method are required.");
+    }
 
     private static void ValidateJob(string title, string description, decimal? salary, string workType, string experience, DateTime? startDate, string? area)
     {

@@ -20,4 +20,8 @@ public record JobResponse(
     string PaymentPeriod,
     DateTime? StartDate,
     string Status,
-    string? Area = null);
+    string? Area = null,
+    string ContactPersonName = "",
+    string? ContactMobileNumber = null,
+    bool AllowPhoneCall = false,
+    bool AllowWhatsApp = false);

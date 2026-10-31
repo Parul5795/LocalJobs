@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LocalJobs.Contracts.Requests;
 
 public record CreateAdRequest(
@@ -7,4 +9,8 @@ public record CreateAdRequest(
     int CityId,
     decimal? Price,
     string? Area = null,
-    string[]? ImageUrls = null);
+    string[]? ImageUrls = null,
+    [property: Required, StringLength(100, MinimumLength = 1)] string ContactPersonName = "",
+    [property: Required, RegularExpression(@"^(?:\+91)?[6-9][0-9]{9}\z")] string ContactMobileNumber = "",
+    bool AllowPhoneCall = false,
+    bool AllowWhatsApp = false);

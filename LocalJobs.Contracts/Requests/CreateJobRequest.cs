@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LocalJobs.Contracts.Requests;
 
 public record CreateJobRequest(
@@ -10,4 +12,8 @@ public record CreateJobRequest(
     string ExperienceRequirement = "",
     string PaymentPeriod = "Monthly",
     DateTime? StartDate = null,
-    string? Area = null);
+    string? Area = null,
+    [property: Required, StringLength(100, MinimumLength = 1)] string ContactPersonName = "",
+    [property: Required, RegularExpression(@"^(?:\+91)?[6-9][0-9]{9}\z")] string ContactMobileNumber = "",
+    bool AllowPhoneCall = false,
+    bool AllowWhatsApp = false);

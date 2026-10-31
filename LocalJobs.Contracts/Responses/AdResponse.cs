@@ -16,4 +16,8 @@ public record AdResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     string? Area = null,
-    string[]? ImageUrls = null);
+    string[]? ImageUrls = null,
+    string ContactPersonName = "",
+    string? ContactMobileNumber = null,
+    bool AllowPhoneCall = false,
+    bool AllowWhatsApp = false);

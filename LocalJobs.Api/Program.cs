@@ -101,6 +101,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.OperationFilter<LocalJobs.Api.AuthorizeOperationFilter>();
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -108,7 +109,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter JWT Bearer token in the format: Bearer {token}"
+        Description = "Paste the JWT token only. Swagger adds the Bearer prefix automatically."
     });
 
 });

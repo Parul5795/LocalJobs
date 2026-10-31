@@ -15,7 +15,7 @@ public class AdService(IApplicationDbContext context) : IAdService
         ToPageAsync(context.Ads.Where(a => a.IsActive), page, pageSize, cancellationToken);
 
     public Task<AdResponse?> GetAdByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        Project(context.Ads.Where(a => a.Id == id && a.IsActive)).FirstOrDefaultAsync(cancellationToken);
+        Project(context.Ads.Where(a => a.Id == id && a.IsActive), includeContactMobile: true).FirstOrDefaultAsync(cancellationToken);
 
     public Task<PagedResponse<AdResponse>> SearchAdsAsync(int? cityId, int? adCategoryId, string? area, string? keyword, int page, int pageSize,
         CancellationToken cancellationToken = default)
@@ -34,30 +34,36 @@ public class AdService(IApplicationDbContext context) : IAdService
     public async Task<AdResponse> CreateAdAsync(CreateAdRequest request, Guid userId, CancellationToken cancellationToken = default)
     {
         Validate(request.Title, request.Description, request.Price, request.Area, request.ImageUrls);
+        ValidateContact(request.ContactPersonName, request.ContactMobileNumber, request.AllowPhoneCall, request.AllowWhatsApp);
         if (!await context.Users.AnyAsync(u => u.Id == userId, cancellationToken)) throw new KeyNotFoundException("User was not found.");
         await ValidateLocationAndCategory(request.AdCategoryId, request.CityId, cancellationToken);
         var ad = new Ad { Id = Guid.NewGuid(), UserId = userId, Title = request.Title.Trim(), Description = request.Description.Trim(),
             AdCategoryId = request.AdCategoryId, CityId = request.CityId, Area = TrimOrNull(request.Area), Price = request.Price,
-            ImageUrls = request.ImageUrls?.Select(v => v.Trim()).ToArray() ?? [], IsActive = true };
+            ImageUrls = request.ImageUrls?.Select(v => v.Trim()).ToArray() ?? [], IsActive = true,
+            ContactPersonName = request.ContactPersonName.Trim(), ContactMobileNumber = request.ContactMobileNumber.Trim(),
+            AllowPhoneCall = request.AllowPhoneCall, AllowWhatsApp = request.AllowWhatsApp };
         context.Ads.Add(ad);
         await context.SaveChangesAsync(cancellationToken);
-        return await Project(context.Ads.Where(a => a.Id == ad.Id)).FirstAsync(cancellationToken);
+        return await Project(context.Ads.Where(a => a.Id == ad.Id), includeContactMobile: true).FirstAsync(cancellationToken);
     }
 
     public Task<PagedResponse<AdResponse>> GetMyAdsAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken = default) =>
-        ToPageAsync(context.Ads.Where(a => a.UserId == userId), page, pageSize, cancellationToken);
+        ToPageAsync(context.Ads.Where(a => a.UserId == userId), page, pageSize, cancellationToken, includeContactMobile: true);
 
     public async Task<AdResponse?> UpdateAdAsync(Guid id, UpdateAdRequest request, Guid userId, CancellationToken cancellationToken = default)
     {
         var ad = await context.Ads.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
         if (ad is null || ad.UserId != userId) return null;
         Validate(request.Title, request.Description, request.Price, request.Area, request.ImageUrls);
+        ValidateContact(request.ContactPersonName, request.ContactMobileNumber, request.AllowPhoneCall, request.AllowWhatsApp);
         await ValidateLocationAndCategory(request.AdCategoryId, request.CityId, cancellationToken);
         ad.Title = request.Title.Trim(); ad.Description = request.Description.Trim(); ad.AdCategoryId = request.AdCategoryId;
         ad.CityId = request.CityId; ad.Area = TrimOrNull(request.Area); ad.Price = request.Price;
         ad.ImageUrls = request.ImageUrls?.Select(v => v.Trim()).ToArray() ?? []; ad.IsActive = request.IsActive; ad.UpdatedAt = DateTime.UtcNow;
+        ad.ContactPersonName = request.ContactPersonName.Trim(); ad.ContactMobileNumber = request.ContactMobileNumber.Trim();
+        ad.AllowPhoneCall = request.AllowPhoneCall; ad.AllowWhatsApp = request.AllowWhatsApp;
         await context.SaveChangesAsync(cancellationToken);
-        return await Project(context.Ads.Where(a => a.Id == id)).FirstAsync(cancellationToken);
+        return await Project(context.Ads.Where(a => a.Id == id), includeContactMobile: true).FirstAsync(cancellationToken);
     }
 
     public async Task<bool> DeactivateAdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
@@ -69,16 +75,17 @@ public class AdService(IApplicationDbContext context) : IAdService
         return true;
     }
 
-    private static IQueryable<AdResponse> Project(IQueryable<Ad> query) => query.Select(a => new AdResponse(a.Id, a.Title, a.Description,
+    private static IQueryable<AdResponse> Project(IQueryable<Ad> query, bool includeContactMobile = false) => query.Select(a => new AdResponse(a.Id, a.Title, a.Description,
         a.AdCategoryId, a.AdCategory.Name, a.CityId, a.City.Name, a.City.State, a.Price, a.UserId, a.User.Name,
-        a.IsActive, a.CreatedAt, a.UpdatedAt, a.Area, a.ImageUrls));
+        a.IsActive, a.CreatedAt, a.UpdatedAt, a.Area, a.ImageUrls, a.ContactPersonName,
+        includeContactMobile ? a.ContactMobileNumber : null, a.AllowPhoneCall, a.AllowWhatsApp));
 
-    private async Task<PagedResponse<AdResponse>> ToPageAsync(IQueryable<Ad> query, int page, int pageSize, CancellationToken cancellationToken)
+    private async Task<PagedResponse<AdResponse>> ToPageAsync(IQueryable<Ad> query, int page, int pageSize, CancellationToken cancellationToken, bool includeContactMobile = false)
     {
         ValidatePage(page, pageSize);
         var total = await query.CountAsync(cancellationToken);
         var items = await Project(query.OrderByDescending(a => a.CreatedAt).ThenBy(a => a.Id)
-            .Skip((page - 1) * pageSize).Take(pageSize)).ToListAsync(cancellationToken);
+            .Skip((page - 1) * pageSize).Take(pageSize), includeContactMobile).ToListAsync(cancellationToken);
         return new PagedResponse<AdResponse>(items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
     }
 
@@ -100,6 +107,13 @@ public class AdService(IApplicationDbContext context) : IAdService
     {
         if (page < 1 || pageSize is < 1 or > 100 || page > int.MaxValue / pageSize)
             throw new ArgumentException("Page must be at least 1 and pageSize must be between 1 and 100.");
+    }
+    private static void ValidateContact(string name, string mobile, bool allowPhoneCall, bool allowWhatsApp)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 100 ||
+            !System.Text.RegularExpressions.Regex.IsMatch(mobile ?? "", @"^(?:\+91)?[6-9][0-9]{9}\z") ||
+            (!allowPhoneCall && !allowWhatsApp))
+            throw new ArgumentException("Contact name, a valid Indian mobile number, and at least one contact method are required.");
     }
     private static string? TrimOrNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

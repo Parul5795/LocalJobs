@@ -36,6 +36,8 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
             .HasDefaultValue(true);
 
         builder.Property(j => j.Area).HasMaxLength(100);
+        builder.Property(j => j.ContactPersonName).IsRequired().HasMaxLength(100);
+        builder.Property(j => j.ContactMobileNumber).IsRequired().HasMaxLength(13);
         builder.HasIndex(j => new { j.IsActive, j.CreatedAt });
         builder.HasIndex(j => new { j.CityId, j.CategoryId, j.IsActive, j.CreatedAt });
         builder.HasIndex(j => new { j.CityId, j.Area, j.IsActive });

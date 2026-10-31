@@ -40,6 +40,7 @@ public class AdsController(IAdService adService) : ControllerBase
     }
 
     [HttpPost]
+    [HttpPost("new")]
     [Authorize]
     public async Task<ActionResult<AdResponse>> CreateAd([FromBody] CreateAdRequest request, CancellationToken cancellationToken)
     {

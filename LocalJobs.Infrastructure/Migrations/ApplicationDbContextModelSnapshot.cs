@@ -31,12 +31,26 @@ namespace LocalJobs.Infrastructure.Migrations
                     b.Property<int>("AdCategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("AllowPhoneCall").HasColumnType("boolean");
+
+                    b.Property<bool>("AllowWhatsApp").HasColumnType("boolean");
+
                     b.Property<string>("Area")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ContactMobileNumber")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
+
+                    b.Property<string>("ContactPersonName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -317,6 +331,10 @@ namespace LocalJobs.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("AllowPhoneCall").HasColumnType("boolean");
+
+                    b.Property<bool>("AllowWhatsApp").HasColumnType("boolean");
+
                     b.Property<string>("Area")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -326,6 +344,16 @@ namespace LocalJobs.Infrastructure.Migrations
 
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ContactMobileNumber")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
+
+                    b.Property<string>("ContactPersonName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
